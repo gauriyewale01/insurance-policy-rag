@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Policy-to-Patient</title>
+<style>
+/* ===== BASE (shared with member 1) ===== */
+:root{--red:#A32638;--red-d:#7A1C2B;--red-l:#F6ECEE;--ink:#2A1F21;--mute:#7A6B6E;--line:#EBDDE0;--bg:#FFF;--soft:#FBF8F8;--ok:#1E7A4C;--warn:#B7791F;--radius:10px}
+*{box-sizing:border-box;margin:0}
+body{font-family:"Segoe UI",system-ui,sans-serif;color:var(--ink);background:var(--soft);display:flex;min-height:100vh;line-height:1.5}
+button,input,select,textarea{font:inherit}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+
+/* sidebar */
+.side{width:240px;background:var(--red);color:#fff;padding:24px 14px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh;flex-shrink:0}
+.brand{font-size:1.25rem;font-weight:700;padding:0 10px 4px}
+.brand-sub{font-size:.8rem;opacity:.8;padding:0 10px 22px}
+.nav{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;background:none;border:0;color:#fff;cursor:pointer;text-align:left;width:100%;opacity:.85}
+.nav:hover{background:rgba(255,255,255,.12);opacity:1}
+.nav.on{background:#fff;color:var(--red);font-weight:600;opacity:1}
+.nav svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.side-foot{margin-top:auto;font-size:.75rem;opacity:.75;padding:0 10px}
+
+main{flex:1;min-width:0}
+.page{display:none;padding:32px 40px;max-width:1100px}
+.page.on{display:block}
+h1{font-size:1.6rem;color:var(--red-d)}
+.lead{color:var(--mute);margin:4px 0 24px;max-width:70ch}
+h2{font-size:1.05rem;margin-bottom:10px}
+.card{background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+.mb{margin-bottom:16px}
+
+/* shared components */
+.btn{background:var(--red);color:#fff;border:0;border-radius:8px;padding:10px 18px;cursor:pointer;font-weight:600}
+.btn:hover{background:var(--red-d)}
+.btn.ghost{background:none;color:var(--red);border:1px solid var(--red)}
+.btn.ghost:hover{background:var(--red-l)}
+.tag{display:inline-block;font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--red-l);color:var(--red)}
+.tag.req{background:var(--red);color:#fff}
+.st{font-weight:700;font-size:.78rem}.st.done{color:var(--ok)}.st.miss{color:var(--warn)}
+.bar{height:8px;border-radius:9px;background:var(--line);overflow:hidden;margin:8px 0}
+.bar i{display:block;height:100%;background:var(--red)}
+/* input page */
+.seg{display:inline-flex;border:1px solid var(--red);border-radius:8px;overflow:hidden;margin-bottom:18px}
+.seg button{background:#fff;color:var(--red);border:0;padding:9px 18px;cursor:pointer;font-weight:600}
+.seg button.on{background:var(--red);color:#fff}
+.split{display:grid;grid-template-columns:180px 1fr;gap:24px}
+.tabs{display:flex;flex-direction:column;gap:4px;border-right:1px solid var(--line);padding-right:16px}
+.tab{background:none;border:0;padding:11px 12px;cursor:pointer;color:var(--mute);border-left:3px solid transparent;border-radius:0 8px 8px 0;font-weight:600;text-align:left}
+.tab:hover{background:var(--soft)}
+.tab.on{color:var(--red);border-color:var(--red);background:var(--red-l)}
+.pane{display:none}.pane.on{display:block}
+.drop{border:2px dashed #D9B0B8;background:var(--red-l);border-radius:var(--radius);padding:28px;text-align:center;cursor:pointer;display:block}
+.drop:hover{border-color:var(--red)}
+.drop strong{color:var(--red-d);display:block}
+.drop span{font-size:.85rem;color:var(--mute)}
+.drop input{display:none}
+label.f{display:block;font-size:.85rem;font-weight:600;margin-bottom:12px}
+label.f input,label.f select,label.f textarea{display:block;width:100%;margin-top:4px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+label.f input:focus,label.f select:focus,label.f textarea:focus{border-color:var(--red)}
+.hint{font-size:.8rem;color:var(--mute);font-weight:400}
+.only-new{display:none}
+body.mode-new .only-new{display:block}
+body.mode-new .only-have{display:none}
+.checklist{list-style:none;padding:0;font-size:.88rem}
+.checklist li{padding:8px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+@media(max-width:900px){
+ body{flex-direction:column}
+ .side{width:100%;height:auto;flex-direction:row;flex-wrap:wrap;position:static;padding:12px}
+ .brand-sub,.side-foot{display:none}.brand{padding:0 8px 0 0;align-self:center}
+ .nav{width:auto}.page{padding:20px 16px}
+ .g2,.g3,.g4,.rag{grid-template-columns:1fr}.steps{flex-direction:column;gap:8px}.steps div+div{margin:0}
+ .chat{height:70vh}
+ .split{grid-template-columns:1fr;gap:14px}
+ .tabs{flex-direction:row;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--line);padding:0 0 10px}
+ .tab{border-left:0;border-bottom:3px solid transparent;border-radius:0}
+ .tab.on{border-bottom-color:var(--red)}
+ #input .grid[style]{grid-template-columns:1fr!important}
+}
+</style>
+</head>
+<body class="mode-have">
+<!-- MEMBER 2: Input page (document uploads + patient/treatment details). Dashboard and Assistant live in member1_dashboard_rag.html -->
+
+<aside class="side">
+  <div class="brand">Policy-to-Patient</div>
+  <div class="brand-sub">Coverage &amp; cost intelligence</div>
+  <button class="nav" data-page="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Dashboard</button>
+  <button class="nav on" data-page="input"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5M12 3v12"/></svg>Input</button>
+  <button class="nav" data-page="rag"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Policy Assistant</button>
+  <div class="side-foot">Estimates are indicative and not a claim approval.</div>
+</aside>
+
+<main>
+
+<section class="page on" id="input">
+  <h1>Your documents and details</h1>
+  <p class="lead">Tell us your situation first. The documents we ask for change based on your choice. Fields marked required are needed for a reliable eligibility check.</p>
+
+  <div class="seg" role="group" aria-label="User type">
+    <button class="on" data-mode="have">I have a policy</button>
+    <button data-mode="new">I am looking for a policy</button>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1fr 300px;align-items:start">
+    <div class="card">
+     <div class="split">
+      <div class="tabs" role="tablist" aria-orientation="vertical">
+        <button class="tab on" data-pane="p1">Policy</button>
+        <button class="tab" data-pane="p2">Patient details</button>
+        <button class="tab" data-pane="p3">Medical records</button>
+        <button class="tab" data-pane="p4">Treatment</button>
+        <button class="tab" data-pane="p5">Identity &amp; claims</button>
+      </div>
+      <div class="panes">
+
+      <div class="pane on" id="p1">
+        <div class="only-have">
+          <label class="drop"><input type="file" accept=".pdf,.doc,.docx"><strong>Upload your policy document <span class="tag req">Required</span></strong><span>PDF or Word. Include the schedule and all endorsements.</span></label>
+          <div class="grid g2" style="margin-top:16px">
+            <label class="f">Insurer<input placeholder="e.g. Star Health"></label>
+            <label class="f">Policy number<input placeholder="Optional"></label>
+            <label class="f">Policy start date<input type="date"></label>
+            <label class="f">Sum insured (₹)<input type="number" placeholder="e.g. 500000"></label>
+          </div>
+        </div>
+        <div class="only-new">
+          <label class="drop"><input type="file" multiple accept=".pdf,.doc,.docx"><strong>Upload policy brochures to compare <span class="tag req">Required</span></strong><span>Add one or more plans you are considering.</span></label>
+          <div class="grid g2" style="margin-top:16px">
+            <label class="f">Cover type<select><option>Individual</option><option>Family floater</option><option>Senior citizen</option></select></label>
+            <label class="f">Budget per year (₹)<input type="number" placeholder="e.g. 20000"></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="pane" id="p2">
+        <div class="grid g2">
+          <label class="f">Full name<input></label>
+          <label class="f">Age<input type="number"></label>
+          <label class="f">Gender<select><option>Select</option><option>Female</option><option>Male</option><option>Other</option></select></label>
+          <label class="f">City<input placeholder="Affects hospital cost"></label>
+          <label class="f">Existing conditions <span class="hint">(diabetes, BP, etc.)</span><input></label>
+          <label class="f">Smoker?<select><option>No</option><option>Yes</option></select></label>
+        </div>
+        <div class="only-new"><label class="f">Family members to cover<textarea rows="2" placeholder="Relation and age, one per line"></textarea></label></div>
+      </div>
+
+      <div class="pane" id="p3">
+        <label class="drop"><input type="file" multiple><strong>Upload medical records <span class="tag">Optional</span></strong><span>Prescriptions, diagnosis reports or discharge summaries. Helps check pre-existing condition rules.</span></label>
+      </div>
+
+      <div class="pane" id="p4">
+        <div class="grid g2">
+          <label class="f">Treatment or procedure<input placeholder="e.g. Knee replacement"></label>
+          <label class="f">Hospital type<select><option>Select</option><option>Government</option><option>Private</option><option>Premium private</option></select></label>
+          <label class="f">Room type<select><option>Select</option><option>General ward</option><option>Semi-private</option><option>Private</option><option>ICU</option></select></label>
+          <label class="f">Expected stay (days)<input type="number"></label>
+          <label class="f">Planned or emergency<select><option>Planned</option><option>Emergency</option></select></label>
+          <label class="f">Hospital name <span class="hint">(network check)</span><input></label>
+        </div>
+        <label class="drop" style="margin-top:6px"><input type="file"><strong>Upload doctor's estimate <span class="tag">Optional</span></strong><span>A hospital quote improves estimate accuracy.</span></label>
+      </div>
+
+      <div class="pane" id="p5">
+        <div class="grid g2">
+          <label class="drop"><input type="file"><strong>ID proof <span class="tag">Optional</span></strong><span>Aadhaar, PAN or passport</span></label>
+          <label class="drop"><input type="file"><strong>Previous claim history <span class="tag">Optional</span></strong><span>Claim letters or statements</span></label>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:20px">
+        <button class="btn" data-go="rag">Save and open assistant</button>
+        <button class="btn ghost" type="button">Clear all</button>
+      </div>
+      </div>
+     </div>
+    </div>
+
+    <div class="card">
+      <h2>Readiness</h2>
+      <div class="bar"><i style="width:40%"></i></div>
+      <p class="hint">2 of 5 sections complete. More details give a more reliable estimate.</p>
+      <ul class="checklist" style="margin-top:10px">
+        <li>Policy document <span class="st done">Added</span></li>
+        <li>Patient details <span class="st done">Added</span></li>
+        <li>Medical records <span class="st miss">Missing</span></li>
+        <li>Treatment <span class="st miss">Missing</span></li>
+        <li>Identity &amp; claims <span class="st miss">Missing</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const OTHER='member1_dashboard_rag.html';
+function go(id){
+  if(!document.getElementById(id)){location.href=OTHER+'#'+id;return}
+  $$('.page').forEach(p=>p.classList.toggle('on',p.id===id));$$('.nav').forEach(n=>n.classList.toggle('on',n.dataset.page===id));scrollTo(0,0)}
+$$('[data-page]').forEach(b=>b.onclick=()=>go(b.dataset.page));
+$$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+$$('[data-mode]').forEach(b=>b.onclick=()=>{$$('[data-mode]').forEach(x=>x.classList.toggle('on',x===b));document.body.className='mode-'+b.dataset.mode});
+$$('[data-pane]').forEach(b=>b.onclick=()=>{$$('.tab').forEach(x=>x.classList.toggle('on',x===b));$$('.pane').forEach(p=>p.classList.toggle('on',p.id===b.dataset.pane))});
+$$('.drop input').forEach(i=>i.onchange=()=>{if(i.files.length){$('span',i.parentNode).textContent=[...i.files].map(f=>f.name).join(', ')}});
+</script>
+</body>
+</html>
